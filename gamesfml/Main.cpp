@@ -6,7 +6,6 @@
 #include <iostream>
 
 
-
 int main()
 {
 	//Window
@@ -30,4 +29,9 @@ int main()
 	//Render
 	window.clear(sf::Color::Blue); // Clear old frame
 
+	// Draw game
+	window.display();
+
+	//End of application
+	return 0;
 }
