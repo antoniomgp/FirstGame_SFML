@@ -4,6 +4,10 @@
 
 int main()
 {
+
+	//Init srand
+	srand(static_cast<unsigned>(time(NULL)));
+
 	//Initialize Game engine
 	Game game;
 
@@ -13,6 +17,7 @@ int main()
 		game.update();
 		//Render
 		game.render();
+
 
 	}
 
