@@ -8,9 +8,10 @@ void Game::initVariables() {
 
 	//Game logic initialization
 	this->points = 0;
-	this->enemySpawnTimerMax = 1000.f;
+	this->enemySpawnTimerMax = 10.f;
 	this->enemySpawnTimer = this->enemySpawnTimerMax;
-	this->maxEnemies = 5;
+	this->maxEnemies = 2;
+	this->mouseHold = false;
 }
 
 void Game::initWindow() {
@@ -65,6 +66,7 @@ void Game::update(){
 	this->pollEvents();
 
 	this->updateMousePositions();
+	
 
 	this->updateEnemies();
 }
@@ -72,7 +74,10 @@ void Game::update(){
 
 void Game::updateMousePositions() {
 	this->mousePositionWindow = sf::Mouse::getPosition(*this->window);
+	this->mousePosView = this->window->mapPixelToCoords(this->mousePositionWindow);
 }
+
+
 
 void Game::spawnEnemy(){
 	this->enemy.setPosition(static_cast<float>(rand() % static_cast<int>(this->window->getSize().x - this->enemy.getSize().x)),0.f);
@@ -98,10 +103,36 @@ void Game::updateEnemies(){
 		}
 	}
 
-	//Move enemies
-	for (auto &e : this->enemies)
-	{
-		e.move(0.f, 1.f);
+	//Move and updating enemies
+	for (unsigned i = 0; i < this->enemies.size(); i++) {
+
+		this->enemies[i].move(0.f, 5.f);
+
+		if (this->enemies[i].getPosition().y > this->window->getSize().y) {
+			this->enemies.erase(this->enemies.begin() + i);
+		}
+	}
+	//Check if clicked upon
+	
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+
+		if (this->mouseHold == false) {
+			this->mouseHold = true;
+			bool deleted = false;
+			for (size_t i = 0; i < this->enemies.size() && deleted == false; i++) {
+				if (this->enemies[i].getGlobalBounds().contains(this->mousePosView)) {
+					//Delete the enemy
+					deleted = true;
+					this->enemies.erase(this->enemies.begin() + i);
+					//Gain points
+					this->points += 1.f;
+				}
+			}
+		}
+		
+	}
+	else {
+		this->mouseHold = false;
 	}
 }
 
@@ -131,7 +162,3 @@ void Game::render(){
 
 	this->window->display();
 }
-
-
-
-
