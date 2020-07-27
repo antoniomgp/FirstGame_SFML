@@ -12,7 +12,7 @@ void Game::initVariables() {
 	this->points = 0;
 	this->enemySpawnTimerMax = 10.f;
 	this->enemySpawnTimer = this->enemySpawnTimerMax;
-	this->maxEnemies = 2;
+	this->maxEnemies = 5;
 	this->mouseHold = false;
 }
 
@@ -25,6 +25,29 @@ void Game::initWindow() {
 	this->window->setFramerateLimit(60);
 }
 
+void Game::initFonts()
+{
+	if (this->font.loadFromFile("Fonts/arial.ttf")) {
+		std::cout << "ERROR::GAME::INITFONTS::Failed to load font!" << "\n" << std::endl;
+	}
+}
+
+void Game::initText()
+{
+	this->uiText.setFont(this->font);
+	this->uiText.setCharacterSize(24);
+	this->uiText.setFillColor(sf::Color::White);
+	this->uiText.setString("NONE");
+}
+
+void Game::initOverText()
+{
+	this->OverText.setFont(this->font);
+	this->OverText.setCharacterSize(90);
+	this->OverText.setFillColor(sf::Color::Red);
+	this->OverText.setPosition(150,250);
+}
+
 void Game::initEnemies(){
 	this->enemy.setPosition(10.f,10.f);
 	this->enemy.setSize(sf::Vector2f(100.f, 100.f));
@@ -32,11 +55,16 @@ void Game::initEnemies(){
 	this->enemy.setFillColor(sf::Color::Red);
 }
 
+
+
 //Constructors / Destructors
 Game::Game() {
 	this->initVariables();
 	this->initWindow();
 	this->initEnemies();
+	this->initFonts();
+	this->initText();
+	this->initOverText();
 }
 
 const bool Game::running() const
@@ -66,6 +94,14 @@ void Game::pollEvents(){
 	}
 }
 
+void Game::updateText()
+{
+	std::stringstream ss;
+
+	ss << "Points: " << this->points << "\n" << "Health: " << this->health << "\n";
+	this->uiText.setString(ss.str());
+}
+
 
 
 //Functions
@@ -74,20 +110,36 @@ void Game::update(){
 
 	if(this->endGame == false)
 		this->updateMousePositions();
-	
-
+		this->updateText();
 		this->updateEnemies();
+		this->GameOverText();
 
 		//End game condition
-		if (this->health <= 0) {
+		if (this->health <= 0) {	
 			this->endGame = true;
+			
 	}
+}
+
+void Game::renderText(sf::RenderTarget& target)
+{
+	target.draw(this->uiText);
+	target.draw(this->OverText);
 }
 
 
 void Game::updateMousePositions() {
 	this->mousePositionWindow = sf::Mouse::getPosition(*this->window);
 	this->mousePosView = this->window->mapPixelToCoords(this->mousePositionWindow);
+}
+
+void Game::GameOverText()
+{
+	if (health <= 0) {
+		std::stringstream sf;
+		sf << "GAMEOVER";
+		this->OverText.setString(sf.str());
+	}
 }
 
 
@@ -132,15 +184,14 @@ void Game::updateEnemies(){
 
 		if (this->mouseHold == false) {
 			this->mouseHold = true;
-			bool deleted = false;
-			for (size_t i = 0; i < this->enemies.size() && deleted == false; i++) {
+			for (size_t i = 0; i < this->enemies.size(); i++) {
 				if (this->enemies[i].getGlobalBounds().contains(this->mousePosView)) {
 					//Delete the enemy
-					deleted = true;
 					this->enemies.erase(this->enemies.begin() + i);
 					//Gain points
 					this->points += 1;
 					std::cout << "Points: " << this->points << std::endl;
+					break;
 				}
 			}
 		}
@@ -151,10 +202,10 @@ void Game::updateEnemies(){
 	}
 }
 
-void Game::renderEnemies(){
+void Game::renderEnemies(sf::RenderTarget& target){
 	for (auto& e : this->enemies)
 	{
-		this->window->draw(e);
+		target.draw(e);
 	}
 	
 }
@@ -173,7 +224,10 @@ void Game::render(){
 	this->window->clear();
 
 	//Draw game objects
-	this->renderEnemies();
+	this->renderEnemies(*this->window);
+
+	this->renderText(*this->window);
 
 	this->window->display();
 }
+
